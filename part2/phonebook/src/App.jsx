@@ -3,6 +3,7 @@ import axios from 'axios'
 import Filter from './components/Filter'
 import PersonForm from './components/PersonForm'
 import Persons from './components/Persons'
+import personService from './services/persons/'
 
 
 const App = () => {
@@ -28,18 +29,55 @@ const App = () => {
     
     if (doesPersonExist) {
       console.log('does person exist', doesPersonExist)
-      alert(`${newName} is already added to the phonebook`)
+      if (window.confirm(`${newName} is already added to phonebook,
+        replace the old number with a new one?`)) {
+        updatePerson(newName)
+      } 
     } else {
       const personObject = {
         name: newName,
         number: newNumber,
-        id: String(persons.length + 1)
       }
 
-      setPersons(persons.concat(personObject))
-      setNewName('')
+      personService
+        .create(personObject)
+        .then(returnedPerson => {
+          setPersons(persons.concat(returnedPerson))
+          setNewName('')
+        })
     }
 
+  }
+
+  const updatePerson = (name) => {
+    const personToUpdate = persons.find(person => person.name === name)
+    const changedNumber = {...personToUpdate, number: newNumber}
+
+    personService
+      .update(personToUpdate.id, changedNumber)
+      .then(returnedPerson => {
+        setPersons(persons.map(person => person.id === personToUpdate.id ? returnedPerson : person))
+      })
+      .catch(error => {
+        alert(`${error}`)
+      })
+  }
+
+  const deletePerson = (id) => {
+    personService
+      .deletePerson(id)
+      .then(() => {
+        setPersons(persons.filter(person => person.id !== id))
+      })
+      .catch(error => {
+        alert(`Could not delete person`)
+      })
+  }
+
+  const confirmDeletingPerson = (id, name) => {
+    if (window.confirm(`Delete ${name} ?`)) {
+      deletePerson(id)
+    } 
   }
 
   const checkIfPersonExists = () => {
@@ -90,7 +128,7 @@ const App = () => {
         handleNumberChange={handleNumberChange}
       />
       <h2>Numbers</h2>
-      <Persons persons={personsToShow} />
+      <Persons persons={personsToShow} onDelete={confirmDeletingPerson}/>
     </div>
   )
 }
