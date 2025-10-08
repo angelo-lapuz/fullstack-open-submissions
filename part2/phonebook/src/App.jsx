@@ -5,12 +5,34 @@ import PersonForm from './components/PersonForm'
 import Persons from './components/Persons'
 import personService from './services/persons/'
 
+const Notification = ({ message, fontColour }) => {
+  const errorStyle = {
+    color: fontColour,
+    backgroundColor: 'lightgrey',
+    fontSize: 20,
+    borderStyle: 'solid',
+    borderRadius: 5,
+    padding: 10,
+    marginBottom: 10
+  }
+  if (message === null) {
+    return null
+  }
+
+  return (
+    <div style={errorStyle}>
+      {message}
+    </div>
+  )
+}
 
 const App = () => {
   const [persons, setPersons] = useState([])
   const [newName, setNewName] = useState('')
   const [newNumber, setNewNumber] = useState('')
   const [newSearchNameValue, setNewSearchNameValue] = useState('')
+  const [errorMessage, setErrorMessage] = useState('')
+  const [fontColour, setFontColour] = useState('')
 
   // axios gets data from server
   useEffect(() => {
@@ -32,6 +54,14 @@ const App = () => {
       if (window.confirm(`${newName} is already added to phonebook,
         replace the old number with a new one?`)) {
         updatePerson(newName)
+        setErrorMessage(
+          `Changed number of ${newName}`
+        )
+        setFontColour('green')
+        setTimeout(() => {
+          setErrorMessage(null)
+          setFontColour('')
+        }, 5000)
       } 
     } else {
       const personObject = {
@@ -45,6 +75,15 @@ const App = () => {
           setPersons(persons.concat(returnedPerson))
           setNewName('')
         })
+
+        setErrorMessage(
+          `Added ${personObject.name}`
+        )
+        setFontColour('green')
+        setTimeout(() => {
+          setErrorMessage(null)
+          setFontColour('')
+        }, 5000)
     }
 
   }
@@ -59,7 +98,14 @@ const App = () => {
         setPersons(persons.map(person => person.id === personToUpdate.id ? returnedPerson : person))
       })
       .catch(error => {
-        alert(`${error}`)
+        setErrorMessage(
+          `Information of ${name} has already been removed from server`
+        )
+        setFontColour('red')
+        setTimeout(() => {
+          setErrorMessage(null)
+          setFontColour('')
+        }, 5000)
       })
   }
 
@@ -108,10 +154,11 @@ const App = () => {
   const personsToShow = newSearchNameValue === ''
     ? persons
     : persons.filter((person) => person.name.toLowerCase().includes(newSearchNameValue.toLowerCase()))
-
+  
   return (
     <div>
       <h2>Phonebook</h2>
+      <Notification message={errorMessage} fontColour={fontColour}/>
       <div>
         <Filter 
           text='filter shown with'
